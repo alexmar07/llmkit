@@ -13,6 +13,14 @@ class ProviderConfig(BaseModel):
     model: str = ""
     base_url: str | None = None
 
+    @field_validator("name", mode="before")
+    @classmethod
+    def normalize_name(cls, v: object) -> object:
+        """Normalize provider name to lowercase."""
+        if isinstance(v, str):
+            return v.strip().lower()
+        return v
+
 
 class LLMConfig(BaseSettings):
     """Main LLMKit configuration."""

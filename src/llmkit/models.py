@@ -23,20 +23,20 @@ class Usage(BaseModel):
     total_tokens: int = 0
 
 
-class ChatResponse(BaseModel):
+class _LLMResponseBase(BaseModel):
+    """Shared fields for all LLM response types."""
+
+    content: str
+    provider: str
+    model: str
+    usage: Usage | None = None
+
+
+class ChatResponse(_LLMResponseBase):
     """Response from an LLM chat completion."""
 
-    content: str
-    provider: str
-    model: str
-    usage: Usage | None = None
 
-
-class StreamChunk(BaseModel):
+class StreamChunk(_LLMResponseBase):
     """A single chunk from a streaming response."""
 
-    content: str
-    provider: str
-    model: str
     done: bool = False
-    usage: Usage | None = None
