@@ -40,6 +40,7 @@ class AnthropicProvider:
         self._model = model
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
+        self._client = httpx.AsyncClient(timeout=self._timeout)
 
     @property
     def name(self) -> str:
@@ -50,7 +51,6 @@ class AnthropicProvider:
         return {
             "x-api-key": self._api_key,
             "anthropic-version": _ANTHROPIC_VERSION,
-            "Content-Type": "application/json",
         }
 
     def _build_payload(
@@ -115,8 +115,10 @@ class AnthropicProvider:
             max_tokens=max_tokens,
         )
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.post(url, headers=self._headers(), json=payload)
+        try:
+            response = await self._client.post(url, headers=self._headers(), json=payload)
+        except httpx.ConnectError as exc:
+            raise ProviderError(self.name, f"Connection failed: {exc}") from exc
 
         if response.status_code != 200:
             raise ProviderError(self.name, f"HTTP {response.status_code}: {response.text}")
@@ -178,10 +180,9 @@ class AnthropicProvider:
         )
         resolved_model = model or self._model
 
-        async with (
-            httpx.AsyncClient(timeout=self._timeout) as client,
-            client.stream("POST", url, headers=self._headers(), json=payload) as response,
-        ):
+        async with self._client.stream(
+            "POST", url, headers=self._headers(), json=payload
+        ) as response:
             if response.status_code != 200:
                 body = await response.aread()
                 raise ProviderError(self.name, f"HTTP {response.status_code}: {body.decode()}")

@@ -37,6 +37,7 @@ class OllamaProvider:
         self._model = model
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
+        self._client = httpx.AsyncClient(timeout=self._timeout)
 
     @property
     def name(self) -> str:
@@ -49,7 +50,7 @@ class OllamaProvider:
         return self._base_url
 
     def _headers(self) -> dict[str, str]:
-        return {"Content-Type": "application/json"}
+        return {}
 
     def _build_payload(
         self,
@@ -102,8 +103,7 @@ class OllamaProvider:
         )
 
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                response = await client.post(url, headers=self._headers(), json=payload)
+            response = await self._client.post(url, headers=self._headers(), json=payload)
         except httpx.ConnectError as exc:
             raise ProviderError(self.name, f"Connection failed: {exc}") from exc
 
@@ -165,10 +165,9 @@ class OllamaProvider:
         resolved_model = model or self._model
 
         try:
-            async with (
-                httpx.AsyncClient(timeout=self._timeout) as client,
-                client.stream("POST", url, headers=self._headers(), json=payload) as response,
-            ):
+            async with self._client.stream(
+                "POST", url, headers=self._headers(), json=payload
+            ) as response:
                 if response.status_code != 200:
                     body = await response.aread()
                     raise ProviderError(self.name, f"HTTP {response.status_code}: {body.decode()}")
