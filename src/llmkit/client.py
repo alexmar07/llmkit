@@ -18,6 +18,16 @@ if TYPE_CHECKING:
 
 T = TypeVar("T", bound="BaseModel")
 
+
+_schema_cache: dict[type[Any], str] = {}
+
+
+def _cached_schema_json(model_cls: type[Any]) -> str:
+    """Return the JSON schema string for a Pydantic model, cached per class."""
+    if model_cls not in _schema_cache:
+        _schema_cache[model_cls] = json.dumps(model_cls.model_json_schema(), indent=2)
+    return _schema_cache[model_cls]
+
 _PROVIDER_MAP: dict[str, type[Any]] = {
     "openai": OpenAIProvider,
     "anthropic": AnthropicProvider,
@@ -49,9 +59,7 @@ def _create_provider(
 
     kwargs: dict[str, Any] = {"model": config.model, "timeout": timeout}
 
-    if config.name != "ollama":
-        if config.api_key is None:
-            raise ValueError(f"api_key is required for provider '{config.name}'")
+    if config.api_key is not None:
         kwargs["api_key"] = config.api_key
 
     if config.base_url is not None:
@@ -85,6 +93,17 @@ class LLMClient:
         self._config = config
         self._providers = [_create_provider(p, config.timeout) for p in config.providers]
 
+    async def close(self) -> None:
+        """Close all underlying provider HTTP clients."""
+        for provider in self._providers:
+            await provider._client.aclose()
+
+    async def __aenter__(self) -> LLMClient:
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        await self.close()
+
     def _normalize_messages(self, prompt: str | list[Message]) -> list[Message]:
         """Convert a bare string prompt into a single-item user message list.
 
@@ -107,7 +126,7 @@ class LLMClient:
         Returns:
             A system ``Message`` containing the JSON schema.
         """
-        schema = json.dumps(model_cls.model_json_schema(), indent=2)
+        schema = _cached_schema_json(model_cls)
         content = (
             "You must respond with valid JSON that matches the following JSON schema. "
             "Do not include any explanation or markdown — only the raw JSON object.\n\n"
@@ -228,17 +247,17 @@ class LLMClient:
 
         errors: list[ProviderError] = []
         for provider in providers_to_try:
-            succeeded = False
+            has_yielded = False
             try:
                 async for chunk in provider.stream(
                     messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
                 ):
-                    succeeded = True
+                    has_yielded = True
                     yield chunk
             except ProviderError as exc:
-                if succeeded:
+                if has_yielded:
                     # Already started yielding — cannot fall back; re-raise.
                     raise
                 errors.append(exc)
