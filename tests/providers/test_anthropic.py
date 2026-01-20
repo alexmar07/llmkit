@@ -76,10 +76,12 @@ class TestAnthropicChat:
 class TestAnthropicStream:
     @respx.mock
     async def test_stream_success(self, provider: AnthropicProvider) -> None:
+        _d = "content_block_delta"
+        _td = "text_delta"
         sse_data = (
-            'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hel"}}\n\n'
-            'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"lo"}}\n\n'
-            'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"!"}}\n\n'
+            f'event: {_d}\ndata: {{"type":"{_d}","delta":{{"type":"{_td}","text":"Hel"}}}}\n\n'
+            f'event: {_d}\ndata: {{"type":"{_d}","delta":{{"type":"{_td}","text":"lo"}}}}\n\n'
+            f'event: {_d}\ndata: {{"type":"{_d}","delta":{{"type":"{_td}","text":"!"}}}}\n\n'
             'event: message_stop\ndata: {"type":"message_stop"}\n\n'
         )
         respx.post("https://api.anthropic.com/v1/messages").mock(
