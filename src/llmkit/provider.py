@@ -15,6 +15,8 @@ class Provider(Protocol):
     @property
     def name(self) -> str: ...
 
+    async def close(self) -> None: ...
+
     async def chat(
         self,
         messages: list[Message],

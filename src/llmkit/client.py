@@ -1,6 +1,7 @@
 """LLMClient — the main orchestrator for multi-provider LLM access."""
 from __future__ import annotations
 
+import inspect
 import json
 from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
@@ -59,7 +60,8 @@ def _create_provider(
 
     kwargs: dict[str, Any] = {"model": config.model, "timeout": timeout}
 
-    if config.api_key is not None:
+    sig = inspect.signature(provider_cls.__init__)
+    if "api_key" in sig.parameters and config.api_key is not None:
         kwargs["api_key"] = config.api_key
 
     if config.base_url is not None:
@@ -96,7 +98,7 @@ class LLMClient:
     async def close(self) -> None:
         """Close all underlying provider HTTP clients."""
         for provider in self._providers:
-            await provider._client.aclose()
+            await provider.close()
 
     async def __aenter__(self) -> LLMClient:
         return self

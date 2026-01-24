@@ -44,6 +44,10 @@ class OpenAIProvider:
         """Provider identifier."""
         return "openai"
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        await self._client.aclose()
+
     def _headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self._api_key}",
@@ -100,7 +104,7 @@ class OpenAIProvider:
 
         try:
             response = await self._client.post(url, headers=self._headers(), json=payload)
-        except httpx.ConnectError as exc:
+        except httpx.TransportError as exc:
             raise ProviderError(self.name, f"Connection failed: {exc}") from exc
 
         if response.status_code != 200:
@@ -156,30 +160,41 @@ class OpenAIProvider:
             stream=True,
         )
 
-        async with self._client.stream(
-            "POST", url, headers=self._headers(), json=payload
-        ) as response:
-            if response.status_code != 200:
-                body = await response.aread()
-                raise ProviderError(self.name, f"HTTP {response.status_code}: {body.decode()}")
-
-            async for line in response.aiter_lines():
-                if not line.startswith("data: "):
-                    continue
-                raw = line[len("data: "):]
-                if raw == "[DONE]":
-                    break
-                try:
-                    event = json.loads(raw)
-                except json.JSONDecodeError:
-                    continue
-
-                delta_content: str = event["choices"][0]["delta"].get("content", "")
-                event_model: str = event.get("model", model or self._model)
-
-                if delta_content:
-                    yield StreamChunk(
-                        content=delta_content,
-                        provider=self.name,
-                        model=event_model,
+        try:
+            async with self._client.stream(
+                "POST", url, headers=self._headers(), json=payload
+            ) as response:
+                if response.status_code != 200:
+                    body = await response.aread()
+                    raise ProviderError(
+                        self.name, f"HTTP {response.status_code}: {body.decode()}"
                     )
+
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    raw = line[len("data: "):]
+                    if raw == "[DONE]":
+                        yield StreamChunk(
+                            content="",
+                            provider=self.name,
+                            model=model or self._model,
+                            done=True,
+                        )
+                        return
+                    try:
+                        event = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+
+                    delta_content: str = event["choices"][0]["delta"].get("content", "")
+                    event_model: str = event.get("model", model or self._model)
+
+                    if delta_content:
+                        yield StreamChunk(
+                            content=delta_content,
+                            provider=self.name,
+                            model=event_model,
+                        )
+        except httpx.TransportError as exc:
+            raise ProviderError(self.name, f"Connection failed: {exc}") from exc

@@ -44,6 +44,10 @@ class OllamaProvider:
         """Provider identifier."""
         return "ollama"
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        await self._client.aclose()
+
     @property
     def base_url(self) -> str:
         """Ollama server base URL."""
@@ -104,7 +108,7 @@ class OllamaProvider:
 
         try:
             response = await self._client.post(url, headers=self._headers(), json=payload)
-        except httpx.ConnectError as exc:
+        except httpx.TransportError as exc:
             raise ProviderError(self.name, f"Connection failed: {exc}") from exc
 
         if response.status_code != 200:
@@ -194,5 +198,5 @@ class OllamaProvider:
 
                     if is_done:
                         break
-        except httpx.ConnectError as exc:
+        except httpx.TransportError as exc:
             raise ProviderError(self.name, f"Connection failed: {exc}") from exc

@@ -47,6 +47,10 @@ class AnthropicProvider:
         """Provider identifier."""
         return "anthropic"
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        await self._client.aclose()
+
     def _headers(self) -> dict[str, str]:
         return {
             "x-api-key": self._api_key,
@@ -117,7 +121,7 @@ class AnthropicProvider:
 
         try:
             response = await self._client.post(url, headers=self._headers(), json=payload)
-        except httpx.ConnectError as exc:
+        except httpx.TransportError as exc:
             raise ProviderError(self.name, f"Connection failed: {exc}") from exc
 
         if response.status_code != 200:
@@ -180,34 +184,45 @@ class AnthropicProvider:
         )
         resolved_model = model or self._model
 
-        async with self._client.stream(
-            "POST", url, headers=self._headers(), json=payload
-        ) as response:
-            if response.status_code != 200:
-                body = await response.aread()
-                raise ProviderError(self.name, f"HTTP {response.status_code}: {body.decode()}")
+        try:
+            async with self._client.stream(
+                "POST", url, headers=self._headers(), json=payload
+            ) as response:
+                if response.status_code != 200:
+                    body = await response.aread()
+                    raise ProviderError(
+                        self.name, f"HTTP {response.status_code}: {body.decode()}"
+                    )
 
-            async for line in response.aiter_lines():
-                if not line.startswith("data: "):
-                    continue
-                raw = line[len("data: "):]
-                try:
-                    event = json.loads(raw)
-                except json.JSONDecodeError:
-                    continue
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    raw = line[len("data: "):]
+                    try:
+                        event = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
 
-                event_type: str = event.get("type", "")
+                    event_type: str = event.get("type", "")
 
-                if event_type == "message_stop":
-                    break
+                    if event_type == "message_stop":
+                        yield StreamChunk(
+                            content="",
+                            provider=self.name,
+                            model=resolved_model,
+                            done=True,
+                        )
+                        return
 
-                if event_type == "content_block_delta":
-                    delta = event.get("delta", {})
-                    if delta.get("type") == "text_delta":
-                        text: str = delta.get("text", "")
-                        if text:
-                            yield StreamChunk(
-                                content=text,
-                                provider=self.name,
-                                model=resolved_model,
-                            )
+                    if event_type == "content_block_delta":
+                        delta = event.get("delta", {})
+                        if delta.get("type") == "text_delta":
+                            text: str = delta.get("text", "")
+                            if text:
+                                yield StreamChunk(
+                                    content=text,
+                                    provider=self.name,
+                                    model=resolved_model,
+                                )
+        except httpx.TransportError as exc:
+            raise ProviderError(self.name, f"Connection failed: {exc}") from exc
