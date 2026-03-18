@@ -1,4 +1,4 @@
-"""Anthropic provider implementation."""
+"""OpenAI provider implementation."""
 from __future__ import annotations
 
 import json
@@ -6,26 +6,23 @@ from typing import TYPE_CHECKING, Any
 
 import httpx
 
-from llmkit.exceptions import ProviderError
-from llmkit.models import ChatResponse, Message, StreamChunk, Usage
+from llmwire.exceptions import ProviderError
+from llmwire.models import ChatResponse, Message, StreamChunk, Usage
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
-_ANTHROPIC_VERSION = "2023-06-01"
 
+class OpenAIProvider:
+    """LLM provider for OpenAI-compatible APIs.
 
-class AnthropicProvider:
-    """LLM provider for Anthropic's Messages API.
-
-    Uses httpx directly. Handles system message extraction into the
-    top-level ``system`` field as required by the Anthropic API.
-    Supports both chat completions and streaming via Server-Sent Events.
+    Uses httpx directly (no SDK dependency). Supports both chat completions
+    and streaming via Server-Sent Events.
 
     Args:
-        api_key: Anthropic API key.
-        model: Model identifier (e.g. "claude-3-5-sonnet-20241022").
-        base_url: API base URL. Defaults to the official Anthropic endpoint.
+        api_key: OpenAI API key.
+        model: Model identifier (e.g. "gpt-4o").
+        base_url: API base URL. Defaults to the official OpenAI endpoint.
         timeout: Request timeout in seconds. Defaults to 30.
     """
 
@@ -33,7 +30,7 @@ class AnthropicProvider:
         self,
         api_key: str,
         model: str,
-        base_url: str = "https://api.anthropic.com/v1",
+        base_url: str = "https://api.openai.com/v1",
         timeout: float = 30.0,
     ) -> None:
         self._api_key = api_key
@@ -45,7 +42,7 @@ class AnthropicProvider:
     @property
     def name(self) -> str:
         """Provider identifier."""
-        return "anthropic"
+        return "openai"
 
     async def close(self) -> None:
         """Close the underlying HTTP client."""
@@ -53,8 +50,7 @@ class AnthropicProvider:
 
     def _headers(self) -> dict[str, str]:
         return {
-            "x-api-key": self._api_key,
-            "anthropic-version": _ANTHROPIC_VERSION,
+            "Authorization": f"Bearer {self._api_key}",
         }
 
     def _build_payload(
@@ -66,26 +62,14 @@ class AnthropicProvider:
         max_tokens: int | None,
         stream: bool = False,
     ) -> dict[str, Any]:
-        """Build the request payload, extracting system messages."""
-        system_parts: list[str] = []
-        user_messages: list[dict[str, str]] = []
-
-        for msg in messages:
-            if msg.role == "system":
-                system_parts.append(msg.content)
-            else:
-                user_messages.append({"role": msg.role, "content": msg.content})
-
         payload: dict[str, Any] = {
             "model": model or self._model,
-            "messages": user_messages,
+            "messages": [{"role": m.role, "content": m.content} for m in messages],
             "temperature": temperature,
-            "max_tokens": max_tokens if max_tokens is not None else 4096,
             "stream": stream,
         }
-        if system_parts:
-            payload["system"] = "\n".join(system_parts)
-
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
         return payload
 
     async def chat(
@@ -99,11 +83,10 @@ class AnthropicProvider:
         """Send a chat completion request.
 
         Args:
-            messages: Conversation history. System messages are extracted
-                and placed in the top-level ``system`` field.
+            messages: Conversation history.
             model: Override the default model.
             temperature: Sampling temperature.
-            max_tokens: Maximum tokens to generate. Defaults to 4096.
+            max_tokens: Maximum tokens to generate.
 
         Returns:
             ChatResponse with content, provider, model, and usage.
@@ -111,7 +94,7 @@ class AnthropicProvider:
         Raises:
             ProviderError: On any non-200 HTTP response.
         """
-        url = f"{self._base_url}/messages"
+        url = f"{self._base_url}/chat/completions"
         payload = self._build_payload(
             messages,
             model=model,
@@ -128,17 +111,15 @@ class AnthropicProvider:
             raise ProviderError(self.name, f"HTTP {response.status_code}: {response.text}")
 
         data = response.json()
-        content: str = data["content"][0]["text"]
+        content: str = data["choices"][0]["message"]["content"]
         resolved_model: str = data.get("model", model or self._model)
 
         usage: Usage | None = None
         if raw_usage := data.get("usage"):
-            prompt_tokens: int = raw_usage.get("input_tokens", 0)
-            completion_tokens: int = raw_usage.get("output_tokens", 0)
             usage = Usage(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens,
+                prompt_tokens=raw_usage.get("prompt_tokens", 0),
+                completion_tokens=raw_usage.get("completion_tokens", 0),
+                total_tokens=raw_usage.get("total_tokens", 0),
             )
 
         return ChatResponse(
@@ -158,23 +139,19 @@ class AnthropicProvider:
     ) -> AsyncIterator[StreamChunk]:
         """Stream a chat completion response via SSE.
 
-        Anthropic uses typed events. Only ``content_block_delta`` events
-        with ``text_delta`` deltas produce text. ``message_stop`` signals
-        the end of the stream.
-
         Args:
             messages: Conversation history.
             model: Override the default model.
             temperature: Sampling temperature.
-            max_tokens: Maximum tokens to generate. Defaults to 4096.
+            max_tokens: Maximum tokens to generate.
 
         Yields:
-            StreamChunk for each text delta received.
+            StreamChunk for each token delta received.
 
         Raises:
             ProviderError: On any non-200 HTTP response.
         """
-        url = f"{self._base_url}/messages"
+        url = f"{self._base_url}/chat/completions"
         payload = self._build_payload(
             messages,
             model=model,
@@ -182,7 +159,6 @@ class AnthropicProvider:
             max_tokens=max_tokens,
             stream=True,
         )
-        resolved_model = model or self._model
 
         try:
             async with self._client.stream(
@@ -198,31 +174,27 @@ class AnthropicProvider:
                     if not line.startswith("data: "):
                         continue
                     raw = line[len("data: "):]
+                    if raw == "[DONE]":
+                        yield StreamChunk(
+                            content="",
+                            provider=self.name,
+                            model=model or self._model,
+                            done=True,
+                        )
+                        return
                     try:
                         event = json.loads(raw)
                     except json.JSONDecodeError:
                         continue
 
-                    event_type: str = event.get("type", "")
+                    delta_content: str = event["choices"][0]["delta"].get("content", "")
+                    event_model: str = event.get("model", model or self._model)
 
-                    if event_type == "message_stop":
+                    if delta_content:
                         yield StreamChunk(
-                            content="",
+                            content=delta_content,
                             provider=self.name,
-                            model=resolved_model,
-                            done=True,
+                            model=event_model,
                         )
-                        return
-
-                    if event_type == "content_block_delta":
-                        delta = event.get("delta", {})
-                        if delta.get("type") == "text_delta":
-                            text: str = delta.get("text", "")
-                            if text:
-                                yield StreamChunk(
-                                    content=text,
-                                    provider=self.name,
-                                    model=resolved_model,
-                                )
         except httpx.TransportError as exc:
             raise ProviderError(self.name, f"Connection failed: {exc}") from exc

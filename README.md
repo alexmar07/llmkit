@@ -1,8 +1,8 @@
-# LLMKit
+# LLMWire
 
-[![CI](https://github.com/alexmar07/llmkit/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmar07/llmkit/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/llmkit)](https://pypi.org/project/llmkit/)
-[![Python](https://img.shields.io/pypi/pyversions/llmkit)](https://pypi.org/project/llmkit/)
+[![CI](https://github.com/alexmar07/llmwire/actions/workflows/ci.yml/badge.svg)](https://github.com/alexmar07/llmwire/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/llmwire)](https://pypi.org/project/llmwire/)
+[![Python](https://img.shields.io/pypi/pyversions/llmwire)](https://pypi.org/project/llmwire/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Lightweight multi-provider LLM client for Python. A single async interface to
@@ -24,14 +24,14 @@ go over plain `httpx`.
 ## Quick Start
 
 ```bash
-pip install llmkit
+pip install llmwire
 ```
 
 ### Chat
 
 ```python
 import asyncio
-from llmkit import LLMClient, LLMConfig, ProviderConfig
+from llmwire import LLMClient, LLMConfig, ProviderConfig
 
 config = LLMConfig(
     providers=[
@@ -82,7 +82,7 @@ async def main():
 ### Direct
 
 ```python
-from llmkit import LLMConfig, ProviderConfig
+from llmwire import LLMConfig, ProviderConfig
 
 config = LLMConfig(
     providers=[
@@ -129,7 +129,7 @@ endpoint (e.g. Azure OpenAI, local OpenAI-compatible servers).
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — design decisions, component overview, and provider protocol
 - [CONTRIBUTING.md](CONTRIBUTING.md) — dev setup, code style, and how to add a new provider
-- [Documentation](https://alexmar07.github.io/llmkit) — full API reference and guides
+- [Documentation](https://alexmar07.github.io/llmwire) — full API reference and guides
 
 ## License
 

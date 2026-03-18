@@ -1,5 +1,5 @@
-"""Tests for LLMKit data models."""
-from llmkit.models import ChatResponse, Message, StreamChunk, Usage
+"""Tests for LLMWire data models."""
+from llmwire.models import ChatResponse, Message, StreamChunk, Usage
 
 
 class TestMessage:

@@ -1,1 +1,1 @@
-"""Shared pytest fixtures and configuration for LLMKit tests."""
+"""Shared pytest fixtures and configuration for LLMWire tests."""

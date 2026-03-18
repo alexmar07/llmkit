@@ -1,8 +1,8 @@
-site_name: LLMKit
+site_name: LLMWire
 site_description: Lightweight multi-provider LLM client for Python
-site_url: https://alexmar07.github.io/llmkit
-repo_url: https://github.com/alexmar07/llmkit
-repo_name: alexmar07/llmkit
+site_url: https://alexmar07.github.io/llmwire
+repo_url: https://github.com/alexmar07/llmwire
+repo_name: alexmar07/llmwire
 
 theme:
   name: material

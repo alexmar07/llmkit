@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
-    from llmkit.models import ChatResponse, Message, StreamChunk
+    from llmwire.models import ChatResponse, Message, StreamChunk
 
 
 class Provider(Protocol):

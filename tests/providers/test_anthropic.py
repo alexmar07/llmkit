@@ -3,9 +3,9 @@ import httpx
 import pytest
 import respx
 
-from llmkit.exceptions import ProviderError
-from llmkit.models import Message
-from llmkit.providers.anthropic import AnthropicProvider
+from llmwire.exceptions import ProviderError
+from llmwire.models import Message
+from llmwire.providers.anthropic import AnthropicProvider
 
 
 @pytest.fixture

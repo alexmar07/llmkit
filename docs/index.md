@@ -1,8 +1,8 @@
-# LLMKit
+# LLMWire
 
 **Lightweight multi-provider LLM client for Python.**
 
-LLMKit provides a single async interface to OpenAI, Anthropic, and Ollama. It handles
+LLMWire provides a single async interface to OpenAI, Anthropic, and Ollama. It handles
 provider fallback, exponential-backoff retry, streaming, and structured output — with
 no provider SDK dependencies. Everything goes over plain `httpx`.
 
@@ -10,7 +10,7 @@ no provider SDK dependencies. Everything goes over plain `httpx`.
 
 ```python
 import asyncio
-from llmkit import LLMClient, LLMConfig, ProviderConfig
+from llmwire import LLMClient, LLMConfig, ProviderConfig
 
 config = LLMConfig(
     providers=[

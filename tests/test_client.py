@@ -4,10 +4,10 @@ import pytest
 import respx
 from pydantic import BaseModel
 
-from llmkit.client import LLMClient
-from llmkit.config import LLMConfig, ProviderConfig
-from llmkit.exceptions import AllProvidersFailedError
-from llmkit.models import Message
+from llmwire.client import LLMClient
+from llmwire.config import LLMConfig, ProviderConfig
+from llmwire.exceptions import AllProvidersFailedError
+from llmwire.models import Message
 
 
 def _openai_config() -> ProviderConfig:

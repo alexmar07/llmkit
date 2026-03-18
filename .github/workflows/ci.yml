@@ -29,10 +29,10 @@ jobs:
         run: ruff check src/ tests/
 
       - name: Type check
-        run: mypy src/llmkit/
+        run: mypy src/llmwire/
 
       - name: Test
-        run: pytest tests/ -v --cov=llmkit --cov-report=xml --cov-fail-under=80
+        run: pytest tests/ -v --cov=llmwire --cov-report=xml --cov-fail-under=80
 
   publish:
     needs: test

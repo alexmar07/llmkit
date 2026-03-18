@@ -2,7 +2,7 @@
 
 ## Design Philosophy
 
-LLMKit is built around three principles:
+LLMWire is built around three principles:
 
 1. **Minimal dependencies.** The runtime requires only `httpx`, `pydantic`,
    `pydantic-settings`, and `pyyaml`. There are no provider SDKs. Each provider
@@ -41,16 +41,16 @@ LLMKit is built around three principles:
                     └─────────────────────────────────────┘
 ```
 
-**`LLMClient`** (`src/llmkit/client.py`) is the only public entry point. It holds an
+**`LLMClient`** (`src/llmwire/client.py`) is the only public entry point. It holds an
 ordered list of provider instances built from `LLMConfig` at construction time. `chat()`
 and `stream()` iterate that list, delegating each attempt to `retry_with_backoff()`.
 
-**`retry_with_backoff`** (`src/llmkit/retry.py`) is a standalone async function that
+**`retry_with_backoff`** (`src/llmwire/retry.py`) is a standalone async function that
 runs a callable up to `max_retries` times. Between attempts it sleeps for
 `base_delay * 2^attempt + jitter` seconds. It only retries exceptions in the
 `retryable_exceptions` tuple; other exceptions propagate immediately.
 
-**Provider adapters** (`src/llmkit/providers/`) are plain classes. Each constructs a
+**Provider adapters** (`src/llmwire/providers/`) are plain classes. Each constructs a
 single `httpx.AsyncClient` in `__init__` and uses it for all requests. `LLMClient`
 calls `await provider._client.aclose()` in `close()` / `__aexit__`.
 
@@ -58,7 +58,7 @@ calls `await provider._client.aclose()` in `close()` / `__aexit__`.
 
 ## Provider Protocol
 
-`Provider` (`src/llmkit/provider.py`) is a `typing.Protocol`:
+`Provider` (`src/llmwire/provider.py`) is a `typing.Protocol`:
 
 ```python
 class Provider(Protocol):
@@ -80,9 +80,9 @@ Any class that satisfies this interface structurally can be used as a provider.
 `_PROVIDER_MAP` in `client.py` maps the string name from `ProviderConfig.name` to the
 concrete class. Adding a new provider means:
 
-1. Creating the adapter class in `src/llmkit/providers/`.
+1. Creating the adapter class in `src/llmwire/providers/`.
 2. Registering it in `_PROVIDER_MAP`.
-3. Exporting it from `src/llmkit/providers/__init__.py`.
+3. Exporting it from `src/llmwire/providers/__init__.py`.
 
 ---
 
@@ -124,12 +124,12 @@ underlying API.
 ## File Structure
 
 ```
-llmkit/
-├── src/llmkit/
+llmwire/
+├── src/llmwire/
 │   ├── __init__.py          # public re-exports and __version__
 │   ├── client.py            # LLMClient — main orchestrator
 │   ├── config.py            # LLMConfig, ProviderConfig (pydantic-settings)
-│   ├── exceptions.py        # LLMKitError, ProviderError, AllProvidersFailedError
+│   ├── exceptions.py        # LLMWireError, ProviderError, AllProvidersFailedError
 │   ├── models.py            # Message, ChatResponse, StreamChunk, Usage
 │   ├── provider.py          # Provider protocol
 │   ├── retry.py             # retry_with_backoff()

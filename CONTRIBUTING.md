@@ -3,8 +3,8 @@
 ## Dev Setup
 
 ```bash
-git clone https://github.com/alexmar07/llmkit.git
-cd llmkit
+git clone https://github.com/alexmar07/llmwire.git
+cd llmwire
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -29,10 +29,10 @@ All three checks must pass before opening a pull request:
 ruff check src/ tests/
 
 # Static type checking
-mypy src/llmkit/
+mypy src/llmwire/
 
 # Tests with coverage report
-pytest tests/ -v --cov=src/llmkit --cov-report=term-missing
+pytest tests/ -v --cov=src/llmwire --cov-report=term-missing
 ```
 
 The CI pipeline runs these checks on Python 3.12 and 3.13.
@@ -51,16 +51,16 @@ The CI pipeline runs these checks on Python 3.12 and 3.13.
 
 ## Adding a New Provider
 
-1. Create `src/llmkit/providers/<name>.py` with a class `<Name>Provider`.
+1. Create `src/llmwire/providers/<name>.py` with a class `<Name>Provider`.
    The class must satisfy the `Provider` protocol (see
-   [`src/llmkit/provider.py`](src/llmkit/provider.py)):
+   [`src/llmwire/provider.py`](src/llmwire/provider.py)):
    - `name` property returning the lowercase provider string
    - `async def chat(...)` returning `ChatResponse`
    - `async def stream(...)` yielding `StreamChunk` objects
 
-2. Export the class from `src/llmkit/providers/__init__.py`.
+2. Export the class from `src/llmwire/providers/__init__.py`.
 
-3. Add the provider to `_PROVIDER_MAP` in `src/llmkit/client.py`:
+3. Add the provider to `_PROVIDER_MAP` in `src/llmwire/client.py`:
    ```python
    _PROVIDER_MAP: dict[str, type[Any]] = {
        "openai": OpenAIProvider,

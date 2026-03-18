@@ -1,12 +1,12 @@
-"""LLMKit exceptions."""
+"""LLMWire exceptions."""
 from __future__ import annotations
 
 
-class LLMKitError(Exception):
-    """Base exception for LLMKit."""
+class LLMWireError(Exception):
+    """Base exception for LLMWire."""
 
 
-class ProviderError(LLMKitError):
+class ProviderError(LLMWireError):
     """Raised when a single provider fails."""
 
     def __init__(self, provider: str, message: str) -> None:
@@ -14,7 +14,7 @@ class ProviderError(LLMKitError):
         super().__init__(f"[{provider}] {message}")
 
 
-class AllProvidersFailedError(LLMKitError):
+class AllProvidersFailedError(LLMWireError):
     """Raised when all providers fail during fallback."""
 
     def __init__(self, errors: list[ProviderError]) -> None:

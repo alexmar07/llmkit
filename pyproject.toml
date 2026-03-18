@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "llmkit"
+name = "llmwire"
 version = "0.1.0"
 description = "Lightweight multi-provider LLM client for Python"
 readme = "README.md"
@@ -45,9 +45,9 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/alexmar07/llmkit"
-Documentation = "https://alexmar07.github.io/llmkit"
-Repository = "https://github.com/alexmar07/llmkit"
+Homepage = "https://github.com/alexmar07/llmwire"
+Documentation = "https://alexmar07.github.io/llmwire"
+Repository = "https://github.com/alexmar07/llmwire"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -68,8 +68,8 @@ warn_return_any = true
 warn_unused_configs = true
 
 [tool.coverage.run]
-source = ["llmkit"]
-source_pkgs = ["llmkit"]
+source = ["llmwire"]
+source_pkgs = ["llmwire"]
 branch = true
 
 [tool.coverage.report]

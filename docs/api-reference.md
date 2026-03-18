@@ -1,21 +1,21 @@
 # API Reference
 
-::: llmkit.client.LLMClient
+::: llmwire.client.LLMClient
 
-::: llmkit.config.LLMConfig
+::: llmwire.config.LLMConfig
 
-::: llmkit.config.ProviderConfig
+::: llmwire.config.ProviderConfig
 
-::: llmkit.models.Message
+::: llmwire.models.Message
 
-::: llmkit.models.ChatResponse
+::: llmwire.models.ChatResponse
 
-::: llmkit.models.StreamChunk
+::: llmwire.models.StreamChunk
 
-::: llmkit.models.Usage
+::: llmwire.models.Usage
 
-::: llmkit.exceptions.LLMKitError
+::: llmwire.exceptions.LLMWireError
 
-::: llmkit.exceptions.ProviderError
+::: llmwire.exceptions.ProviderError
 
-::: llmkit.exceptions.AllProvidersFailedError
+::: llmwire.exceptions.AllProvidersFailedError

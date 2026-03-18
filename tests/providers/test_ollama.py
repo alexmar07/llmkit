@@ -3,9 +3,9 @@ import httpx
 import pytest
 import respx
 
-from llmkit.exceptions import ProviderError
-from llmkit.models import Message
-from llmkit.providers.ollama import OllamaProvider
+from llmwire.exceptions import ProviderError
+from llmwire.models import Message
+from llmwire.providers.ollama import OllamaProvider
 
 
 @pytest.fixture

@@ -3,9 +3,9 @@ import httpx
 import pytest
 import respx
 
-from llmkit.exceptions import ProviderError
-from llmkit.models import Message
-from llmkit.providers.openai import OpenAIProvider
+from llmwire.exceptions import ProviderError
+from llmwire.models import Message
+from llmwire.providers.openai import OpenAIProvider
 
 
 @pytest.fixture

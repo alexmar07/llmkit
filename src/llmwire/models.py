@@ -1,4 +1,4 @@
-"""Data models for LLMKit."""
+"""Data models for LLMWire."""
 from __future__ import annotations
 
 from typing import Literal

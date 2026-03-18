@@ -1,4 +1,4 @@
-"""LLMKit configuration."""
+"""LLMWire configuration."""
 from __future__ import annotations
 
 from pydantic import BaseModel, field_validator
@@ -23,7 +23,7 @@ class ProviderConfig(BaseModel):
 
 
 class LLMConfig(BaseSettings):
-    """Main LLMKit configuration."""
+    """Main LLMWire configuration."""
 
     model_config = {"env_prefix": "LLMKIT_", "env_nested_delimiter": "__"}
 

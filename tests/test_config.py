@@ -1,8 +1,8 @@
-"""Tests for LLMKit configuration."""
+"""Tests for LLMWire configuration."""
 import os
 from unittest.mock import patch
 
-from llmkit.config import LLMConfig, ProviderConfig
+from llmwire.config import LLMConfig, ProviderConfig
 
 
 class TestProviderConfig:

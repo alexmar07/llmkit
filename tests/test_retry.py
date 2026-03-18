@@ -1,7 +1,7 @@
 """Tests for retry logic."""
 import pytest
 
-from llmkit.retry import retry_with_backoff
+from llmwire.retry import retry_with_backoff
 
 
 class TestRetryWithBackoff:

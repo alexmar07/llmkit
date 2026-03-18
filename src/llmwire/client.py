@@ -5,17 +5,17 @@ import inspect
 import json
 from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
-from llmkit.exceptions import AllProvidersFailedError, ProviderError
-from llmkit.models import ChatResponse, Message, StreamChunk
-from llmkit.providers import AnthropicProvider, OllamaProvider, OpenAIProvider
-from llmkit.retry import retry_with_backoff
+from llmwire.exceptions import AllProvidersFailedError, ProviderError
+from llmwire.models import ChatResponse, Message, StreamChunk
+from llmwire.providers import AnthropicProvider, OllamaProvider, OpenAIProvider
+from llmwire.retry import retry_with_backoff
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
     from pydantic import BaseModel
 
-    from llmkit.config import LLMConfig, ProviderConfig
+    from llmwire.config import LLMConfig, ProviderConfig
 
 T = TypeVar("T", bound="BaseModel")
 
@@ -75,7 +75,7 @@ class LLMClient:
     """Orchestrates multi-provider LLM access with fallback and retry logic.
 
     Args:
-        config: Full LLMKit configuration including provider list, fallback
+        config: Full LLMWire configuration including provider list, fallback
             behaviour, retry count, and timeout.
 
     Raises:

@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-pip install llmkit
+pip install llmwire
 ```
 
 Requires Python 3.12 or later.
@@ -15,7 +15,7 @@ Requires Python 3.12 or later.
 Pass provider credentials and options directly when constructing `LLMConfig`:
 
 ```python
-from llmkit import LLMConfig, ProviderConfig
+from llmwire import LLMConfig, ProviderConfig
 
 config = LLMConfig(
     providers=[
@@ -76,7 +76,7 @@ config = LLMConfig()
 
 ```python
 import asyncio
-from llmkit import LLMClient, LLMConfig, ProviderConfig
+from llmwire import LLMClient, LLMConfig, ProviderConfig
 
 config = LLMConfig(
     providers=[ProviderConfig(name="openai", api_key="sk-...", model="gpt-4o")]
@@ -93,7 +93,7 @@ asyncio.run(main())
 You can also pass a list of `Message` objects for multi-turn conversations:
 
 ```python
-from llmkit import Message
+from llmwire import Message
 
 messages = [
     Message(role="system", content="You are a concise assistant."),
@@ -131,7 +131,7 @@ response object:
 ```python
 import asyncio
 from pydantic import BaseModel
-from llmkit import LLMClient, LLMConfig, ProviderConfig
+from llmwire import LLMClient, LLMConfig, ProviderConfig
 
 class MovieReview(BaseModel):
     title: str
@@ -155,7 +155,7 @@ async def main():
 asyncio.run(main())
 ```
 
-LLMKit prepends a system message with the Pydantic JSON schema and instructs the model
+LLMWire prepends a system message with the Pydantic JSON schema and instructs the model
 to respond with raw JSON. The response is then parsed with `model.model_validate_json()`.
 
 ### Using Ollama (local models)
@@ -173,7 +173,7 @@ config = LLMConfig(
 
 ### Fallback across providers
 
-When `fallback=True` (the default), LLMKit tries each provider in order until one
+When `fallback=True` (the default), LLMWire tries each provider in order until one
 succeeds. This is useful for resilience:
 
 ```python
@@ -193,7 +193,7 @@ individual `ProviderError` instances attached as `.errors`.
 ## Error Handling
 
 ```python
-from llmkit import AllProvidersFailedError, ProviderError
+from llmwire import AllProvidersFailedError, ProviderError
 
 try:
     response = await client.chat("Hello")
