@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import re
 from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 from llmwire.exceptions import AllProvidersFailedError, ProviderError
@@ -28,6 +29,18 @@ def _cached_schema_json(model_cls: type[Any]) -> str:
     if model_cls not in _schema_cache:
         _schema_cache[model_cls] = json.dumps(model_cls.model_json_schema(), indent=2)
     return _schema_cache[model_cls]
+
+
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*\n(.*?)\n\s*```", re.DOTALL)
+
+
+def _extract_json(text: str) -> str:
+    """Strip markdown code fences from LLM responses, returning raw JSON."""
+    m = _JSON_FENCE_RE.search(text)
+    if m:
+        return m.group(1).strip()
+    return text.strip()
+
 
 _PROVIDER_MAP: dict[str, type[Any]] = {
     "openai": OpenAIProvider,
@@ -214,7 +227,9 @@ class LLMClient:
                 continue
 
             if response_model is not None:
-                return response_model.model_validate_json(response.content)
+                return response_model.model_validate_json(
+                    _extract_json(response.content)
+                )
             return response
 
         raise AllProvidersFailedError(errors)
